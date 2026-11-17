@@ -53,7 +53,8 @@ export function NumberTicker({
           ref.current.textContent = Intl.NumberFormat("en-US", {
             minimumFractionDigits: decimalPlaces,
             maximumFractionDigits: decimalPlaces,
-          }).format(Number(latest.toFixed(decimalPlaces)))
+          // `+ 0` turns -0 (the spring's first frame can dip just below 0) into 0.
+          }).format(Number(latest.toFixed(decimalPlaces)) + 0)
         }
       }),
     [springValue, decimalPlaces]
