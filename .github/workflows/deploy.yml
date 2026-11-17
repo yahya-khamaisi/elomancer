@@ -1,0 +1,62 @@
+name: Refresh stats and deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * *" # daily, 05:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      RIOT_API_KEY: ${{ secrets.RIOT_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Pulls fresh games when the RIOT_API_KEY secret is set. Without it the
+      # committed snapshot (sample data) is deployed instead. If the key has
+      # expired the job fails and the last good deploy stays live.
+      - name: Fetch Riot snapshot
+        if: ${{ env.RIOT_API_KEY != '' }}
+        env:
+          RIOT_ID: ${{ vars.RIOT_ID || 'khamayseh#456' }}
+          PLATFORM: ${{ vars.PLATFORM || 'euw1' }}
+          REGION: ${{ vars.REGION || 'europe' }}
+          SEASON_START: ${{ vars.SEASON_START }}
+        run: npm run snapshot
+
+      - run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
