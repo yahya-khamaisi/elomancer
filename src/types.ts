@@ -27,6 +27,17 @@ export interface MatchRow {
   damageShare: number;
   /** Lane minions by 10:00. Null for jungle/support or when Riot didn't report it. */
   csAt10: number | null;
+  /** Enemy champion in the same position (your lane or jungle opponent). */
+  opponent: string | null;
+  /** Your takedowns on epic monsters; null when Riot didn't report them. */
+  dragons: number | null;
+  heralds: number | null;
+  barons: number | null;
+  /** Camps taken from the enemy jungle. */
+  enemyJungleCamps: number | null;
+  controlWards: number | null;
+  /** You got the first kill of the game, or assisted it. */
+  firstBlood: boolean;
 }
 
 export interface Snapshot {

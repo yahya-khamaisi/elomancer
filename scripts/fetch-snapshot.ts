@@ -59,7 +59,8 @@ interface LeagueEntry {
   leaguePoints: number; wins: number; losses: number;
 }
 interface Participant {
-  puuid: string; championName: string; teamPosition: string; win: boolean;
+  puuid: string; championName: string; teamPosition: string; win: boolean; teamId: number;
+  firstBloodKill: boolean; firstBloodAssist: boolean;
   kills: number; deaths: number; assists: number;
   totalMinionsKilled: number; neutralMinionsKilled: number;
   goldEarned: number; totalDamageDealtToChampions: number; visionScore: number;
@@ -68,6 +69,11 @@ interface Participant {
     killParticipation?: number;
     teamDamagePercentage?: number;
     laneMinionsFirst10Minutes?: number;
+    dragonTakedowns?: number;
+    riftHeraldTakedowns?: number;
+    baronTakedowns?: number;
+    enemyJungleMonsterKills?: number;
+    controlWardsPlaced?: number;
   };
 }
 interface Match {
@@ -113,6 +119,10 @@ for (const [i, id] of ids.entries()) {
   const me = m.info.participants.find((p) => p.puuid === account.puuid);
   if (!me || me.gameEndedInEarlySurrender) continue; // remake
 
+  const opp = m.info.participants.find(
+    (p) => p.teamId !== me.teamId && p.teamPosition && p.teamPosition === me.teamPosition,
+  );
+  const ch = me.challenges ?? {};
   const minutes = m.info.gameDuration / 60;
   const cs = me.totalMinionsKilled + me.neutralMinionsKilled;
   matches.push({
@@ -136,6 +146,13 @@ for (const [i, id] of ids.entries()) {
     csAt10: me.teamPosition === "JUNGLE" || me.teamPosition === "UTILITY"
       ? null
       : (me.challenges?.laneMinionsFirst10Minutes ?? null),
+    opponent: opp ? (DDRAGON_ID[opp.championName] ?? opp.championName) : null,
+    dragons: ch.dragonTakedowns ?? null,
+    heralds: ch.riftHeraldTakedowns ?? null,
+    barons: ch.baronTakedowns ?? null,
+    enemyJungleCamps: ch.enemyJungleMonsterKills ?? null,
+    controlWards: ch.controlWardsPlaced ?? null,
+    firstBlood: Boolean(me.firstBloodKill || me.firstBloodAssist),
   });
 }
 process.stdout.write("\n");

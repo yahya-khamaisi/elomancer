@@ -1,6 +1,6 @@
 // Writes deterministic demo data to public/data/snapshot.json so the app runs
-// without a Riot key. The page labels it "Sample data". Real data replaces it
-// the first time `npm run snapshot` (or the CI job) runs.
+// without a Riot key. The page labels it "Sample data". The CI job replaces it
+// with real games on every deploy when the RIOT_API_KEY secret is set.
 
 import { mkdir, writeFile } from "node:fs/promises";
 import type { MatchRow, Role, Snapshot } from "../src/types.ts";
@@ -15,22 +15,23 @@ function rand() {
 }
 const between = (a: number, b: number) => a + rand() * (b - a);
 const gauss = () => (rand() + rand() + rand() - 1.5) / 0.5; // ~N(0,1)
+const pickFrom = <T,>(xs: T[]) => xs[Math.floor(rand() * xs.length)];
 
-// A mid-lane main with a jungle secondary, weighted like a real champion pool.
+// A jungle main with a support secondary, weighted like a real champion pool.
 const POOL: { champion: string; role: Role; weight: number; skill: number }[] = [
-  { champion: "Ahri", role: "MIDDLE", weight: 22, skill: 0.08 },
-  { champion: "Viktor", role: "MIDDLE", weight: 15, skill: 0.04 },
-  { champion: "Sylas", role: "MIDDLE", weight: 11, skill: 0.0 },
-  { champion: "Orianna", role: "MIDDLE", weight: 8, skill: -0.02 },
-  { champion: "Syndra", role: "MIDDLE", weight: 6, skill: -0.06 },
-  { champion: "Vi", role: "JUNGLE", weight: 7, skill: 0.03 },
-  { champion: "LeeSin", role: "JUNGLE", weight: 5, skill: -0.08 },
-  { champion: "Jarvan", role: "JUNGLE", weight: 4, skill: 0.02 },
-  { champion: "Lux", role: "UTILITY", weight: 3, skill: 0.0 },
-  { champion: "Ezreal", role: "BOTTOM", weight: 2, skill: -0.1 },
+  { champion: "Shyvana", role: "JUNGLE", weight: 26, skill: 0.07 },
+  { champion: "MonkeyKing", role: "JUNGLE", weight: 15, skill: -0.04 },
+  { champion: "Rammus", role: "JUNGLE", weight: 9, skill: 0.12 },
+  { champion: "JarvanIV", role: "JUNGLE", weight: 7, skill: 0.0 },
+  { champion: "Briar", role: "JUNGLE", weight: 6, skill: -0.05 },
+  { champion: "Lillia", role: "JUNGLE", weight: 4, skill: 0.0 },
+  { champion: "Kayn", role: "JUNGLE", weight: 3, skill: -0.2 },
+  { champion: "Nautilus", role: "UTILITY", weight: 6, skill: -0.03 },
+  { champion: "Lux", role: "UTILITY", weight: 3, skill: 0.03 },
+  { champion: "Yuumi", role: "UTILITY", weight: 3, skill: 0.03 },
 ];
-// Data Dragon ids for champions whose display name differs.
-const DDRAGON: Record<string, string> = { Jarvan: "JarvanIV" };
+const ENEMY_JUNGLERS = ["LeeSin", "Viego", "Graves", "Kindred", "Nidalee", "Vi", "XinZhao", "Hecarim", "Ekko", "Khazix", "Elise", "Diana"];
+const ENEMY_SUPPORTS = ["Thresh", "Leona", "Nami", "Lulu", "Rakan", "Karma", "Blitzcrank", "Pyke"];
 
 function pick() {
   const total = POOL.reduce((s, c) => s + c.weight, 0);
@@ -39,47 +40,63 @@ function pick() {
   return POOL[0];
 }
 
-const GAMES = 84;
+const GAMES = 160;
 const end = new Date("2026-11-16T00:00:00Z").getTime();
 const matches: MatchRow[] = [];
 let day = end;
+let lossesToday = 0;
 
 for (let i = 0; i < GAMES; i++) {
-  if (rand() < 0.45) day -= Math.ceil(between(0, 3)) * 86_400_000;
+  // Sessions of 1-5 games; walk back 0-3 days between them.
+  const newDay = rand() < 0.32;
+  if (newDay) { day -= Math.ceil(between(0.5, 3)) * 86_400_000; lossesToday = 0; }
   const c = pick();
-  // "Form" drifts upward over the season so the trend chart has a story.
-  const form = (GAMES - i) / GAMES - 0.5; // -0.5 (old) .. +0.5 (recent)
-  const lane = gauss() * 0.9 + c.skill * 4 + form * 0.4; // laning quality
-  const win = rand() < 0.5 + lane * 0.13 + c.skill;
-
   const jungle = c.role === "JUNGLE";
   const support = c.role === "UTILITY";
-  const minutes = between(21, 38);
-  const csPerMin = support ? between(0.8, 1.6) : (jungle ? 5.6 : 7.1) + lane * 0.55 + (win ? 0.25 : -0.1);
-  const deaths = Math.max(0, Math.round((win ? 3.6 : 6.1) - lane * 0.8 + gauss() * 1.6));
-  const kp = Math.min(0.92, Math.max(0.25, (win ? 0.6 : 0.49) + gauss() * 0.08 + (jungle ? 0.05 : 0)));
-  const teamKills = Math.round((win ? 28 : 19) * (minutes / 30) + gauss() * 3);
+  const opponent = jungle ? pickFrom(ENEMY_JUNGLERS) : pickFrom(ENEMY_SUPPORTS);
+  const tough = ["LeeSin", "Viego", "Graves", "Pyke"].includes(opponent) ? -0.08 : 0;
+
+  // Tilt: playing on after losses in a session hurts.
+  const tilt = lossesToday >= 2 ? -0.12 : 0;
+  const lane = gauss() * 0.9 + c.skill * 4 + tilt * 3 + tough * 3;
+  const win = rand() < 0.5 + lane * 0.13 + c.skill + tilt + tough;
+  // Newest-first list: a loss here happened *after* the games generated next.
+  lossesToday = win ? 0 : lossesToday + 1;
+
+  const minutes = between(19, 40);
+  const csPerMin = support ? between(0.6, 1.6) : 5.9 + lane * 0.5 + (win ? 0.3 : -0.1);
+  const deaths = Math.max(0, Math.round((win ? 4.6 : 7.4) - lane * 0.8 + gauss() * 1.7));
+  const kp = Math.min(0.9, Math.max(0.25, (win ? 0.52 : 0.47) + gauss() * 0.08));
+  const teamKills = Math.round((win ? 30 : 21) * (minutes / 30) + gauss() * 3);
   const involvement = Math.round(teamKills * kp);
-  const kills = Math.round(involvement * (support ? 0.2 : between(0.38, 0.55)));
+  const kills = Math.round(involvement * (support ? 0.18 : between(0.35, 0.55)));
+  const objectiveEdge = (win ? 1 : 0) + lane * 0.3;
 
   matches.push({
     id: `EUW1_SAMPLE${String(7000 + GAMES - i)}`,
     date: new Date(day).toISOString().slice(0, 10),
     durationMin: Math.round(minutes * 10) / 10,
     win,
-    champion: DDRAGON[c.champion] ?? c.champion,
+    champion: c.champion,
     role: c.role,
     kills,
     deaths,
     assists: Math.max(0, involvement - kills),
     cs: Math.round(csPerMin * minutes),
     csPerMin: Math.round(csPerMin * 100) / 100,
-    goldPerMin: Math.round((win ? 440 : 370) + lane * 28 + gauss() * 20 - (support ? 90 : 0)),
-    damagePerMin: Math.round((support ? 420 : jungle ? 560 : 760) + lane * 70 + (win ? 70 : -20) + gauss() * 60),
-    visionPerMin: Math.round(((support ? 2.1 : jungle ? 1.3 : 0.75) + (win ? 0.1 : 0) + gauss() * 0.12) * 100) / 100,
+    goldPerMin: Math.round((win ? 430 : 375) + lane * 25 + gauss() * 20 - (support ? 100 : 0)),
+    damagePerMin: Math.round((support ? 380 : 680) + lane * 60 + (win ? 60 : -20) + gauss() * 60),
+    visionPerMin: Math.round(((support ? 2.1 : 1.15) + (win ? 0.14 : 0) + gauss() * 0.15) * 100) / 100,
     killParticipation: Math.round(kp * 1000) / 1000,
-    damageShare: Math.round(Math.min(0.42, Math.max(0.1, (support ? 0.12 : 0.27) + lane * 0.025 + gauss() * 0.03)) * 1000) / 1000,
-    csAt10: support || jungle ? null : Math.max(40, Math.round(70 + lane * 8 + gauss() * 4)),
+    damageShare: Math.round(Math.min(0.4, Math.max(0.08, (support ? 0.1 : 0.2) + lane * 0.02 + gauss() * 0.03)) * 1000) / 1000,
+    csAt10: null,
+    opponent,
+    dragons: Math.max(0, Math.round((jungle ? 1.6 : 1.1) + objectiveEdge * 0.9 + gauss() * 0.8)),
+    heralds: Math.max(0, Math.min(2, Math.round((jungle ? 0.6 : 0.3) + objectiveEdge * 0.3 + gauss() * 0.4))),
+    barons: Math.max(0, Math.min(2, Math.round(objectiveEdge * 0.5 + (minutes > 25 ? 0.2 : -0.5) + gauss() * 0.3))),
+    enemyJungleCamps: support ? 0 : Math.max(0, Math.round(6 + lane * 4 + gauss() * 4)),
+    controlWards: Math.max(0, Math.round((support ? 4 : 1.6) + (win ? 0.6 : 0) + gauss() * 1.1)),
+    firstBlood: rand() < (jungle ? 0.28 : 0.22) + lane * 0.05,
   });
 }
 
@@ -88,8 +105,8 @@ const snapshot: Snapshot = {
   generatedAt: new Date(end).toISOString(),
   sample: true,
   ddragonVersion: "14.24.1",
-  player: { gameName: "khamayseh", tagLine: "456", platform: "euw1", profileIconId: 29, summonerLevel: 312 },
-  ranked: { tier: "PLATINUM", rank: "II", lp: 47, wins: wins + 31, losses: GAMES - wins + 29 },
+  player: { gameName: "khamayseh", tagLine: "456", platform: "euw1", profileIconId: 29, summonerLevel: 264 },
+  ranked: { tier: "EMERALD", rank: "III", lp: 85, wins, losses: GAMES - wins },
   matches,
 };
 

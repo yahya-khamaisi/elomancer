@@ -1,14 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rift Insights</title>
-    <meta name="description" content="Ranked League of Legends performance insights built on the Riot Games API." />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232a78d6'/><path d='M8 22l6-7 4 4 6-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>" />
+    <title>Jungle Diff</title>
+    <meta name="description" content="Ranked League of Legends coaching from your own match history: what wins you games, tilt, matchups and champion pool." />
+    <meta name="theme-color" content="#08090b" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232ee6a6'/><path d='M9 23 L15 9 M15 23 L21 9 M21 23 L24 16' stroke='%2303140d' stroke-width='2.6' fill='none' stroke-linecap='round'/></svg>" />
+    <script>
+      // Dark by default; respect a saved choice. Runs before paint to avoid a flash.
+      try {
+        if (localStorage.getItem("theme") === "light") document.documentElement.classList.remove("dark");
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Geist:wght@400..700&family=Geist+Mono&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>

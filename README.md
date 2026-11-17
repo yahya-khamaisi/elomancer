@@ -1,10 +1,20 @@
-# Rift Insights
+# Jungle Diff
 
-Ranked League of Legends performance insights built on the Riot Games API:
-win-rate trend, champion pool, roles, and a "what wins you games" breakdown
-that compares your stats in wins against your stats in losses.
+Ranked League of Legends coaching from your own match history, built on the
+Riot Games API. Live at https://yahya-khamaisi.github.io/rift-insights/
 
-**Stack:** Vite, React 19, TypeScript, hand-built SVG charts (no chart library).
+- **Fix this next:** the 3–4 habits that move your win rate most (deaths cap,
+  champion pool, tilt, control wards, dragons, game length, matchups), ranked
+  by impact and weighted by sample size.
+- **What wins you games:** every stat compared between your wins and losses.
+- **Tilt meter:** your next-game win rate after a win, a loss, and two losses.
+- **Matchups:** best and worst enemy champions in your position.
+- Win-rate trend, champion pool, game length and match history.
+- Filters for range (last 20 / last 50 / season), role and champion apply to
+  every panel.
+
+**Stack:** Vite, React 19, TypeScript, Tailwind CSS v4, shadcn/ui (Base UI),
+Magic UI animations, hand-built SVG charts.
 
 ## How it works
 
@@ -50,7 +60,7 @@ takes a few days).
 
 ---
 
-Rift Insights isn't endorsed by Riot Games and doesn't reflect the views or
+Jungle Diff isn't endorsed by Riot Games and doesn't reflect the views or
 opinions of Riot Games or anyone officially involved in producing or managing
 Riot Games properties. Riot Games and all associated properties are trademarks
 or registered trademarks of Riot Games, Inc.

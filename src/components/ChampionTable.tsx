@@ -1,48 +1,69 @@
-import type { MatchRow } from "../types.ts";
-import { byChampion, championIcon, championName, pct } from "../lib/stats.ts";
+import type { MatchRow } from "@/types";
+import { byChampion, championName, pct } from "@/lib/stats";
+import { cn } from "@/lib/utils";
+import { ChampIcon, Meter, Panel } from "./kit";
 
-export function ChampionTable({ matches, version }: { matches: MatchRow[]; version: string }) {
+/** Champion pool. Clicking a row filters the whole page to that champion. */
+export function ChampionTable({
+  matches, version, selected, onSelect,
+}: {
+  matches: MatchRow[];
+  version: string;
+  selected: string | null;
+  onSelect: (champion: string | null) => void;
+}) {
   const rows = byChampion(matches).slice(0, 10);
   return (
-    <div className="card span-7">
-      <h2>Champion pool</h2>
-      <p className="sub">Most-played champions in these games</p>
-      <div className="scroll-x">
-        <table>
+    <Panel title="Champion pool" description="Click a champion to focus the whole page on it" delay={0.1}>
+      <div className="-mx-2 overflow-x-auto">
+        <table className="w-full text-sm tabular">
           <thead>
-            <tr>
-              <th>Champion</th>
-              <th className="num">Games</th>
-              <th className="num">Win rate</th>
-              <th className="num">KDA</th>
-              <th className="num hide-sm">CS/min</th>
-              <th className="num hide-sm">Dmg/min</th>
+            <tr className="text-left text-xs text-muted-foreground">
+              <th className="px-2 pb-2 font-medium">Champion</th>
+              <th className="px-2 pb-2 text-right font-medium">Games</th>
+              <th className="px-2 pb-2 text-right font-medium">Win rate</th>
+              <th className="px-2 pb-2 text-right font-medium">KDA</th>
+              <th className="hidden px-2 pb-2 text-right font-medium sm:table-cell">CS/min</th>
+              <th className="hidden px-2 pb-2 text-right font-medium sm:table-cell">Dmg/min</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.champion}>
-                <td>
-                  <span className="champ">
-                    <img src={championIcon(version, r.champion)} alt="" loading="lazy" width={28} height={28} />
-                    {championName(r.champion)}
-                  </span>
-                </td>
-                <td className="num">{r.games}</td>
-                <td className="num">
-                  <span className="wr">
-                    {pct(r.winRate)}
-                    <span className="meter" aria-hidden><i style={{ width: pct(r.winRate) }} /></span>
-                  </span>
-                </td>
-                <td className="num">{r.kda.toFixed(2)}</td>
-                <td className="num hide-sm">{r.csPerMin.toFixed(1)}</td>
-                <td className="num hide-sm">{Math.round(r.damagePerMin)}</td>
-              </tr>
-            ))}
+            {rows.map((r) => {
+              const active = selected === r.champion;
+              return (
+                <tr
+                  key={r.champion}
+                  onClick={() => onSelect(active ? null : r.champion)}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onSelect(active ? null : r.champion))}
+                  tabIndex={0}
+                  aria-pressed={active}
+                  className={cn(
+                    "cursor-pointer border-t transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none",
+                    active && "bg-primary/10 hover:bg-primary/15",
+                  )}
+                >
+                  <td className="px-2 py-2">
+                    <span className="flex items-center gap-2.5">
+                      <ChampIcon version={version} id={r.champion} size={30} />
+                      <span className="truncate font-medium">{championName(r.champion)}</span>
+                    </span>
+                  </td>
+                  <td className="px-2 py-2 text-right">{r.games}</td>
+                  <td className="px-2 py-2">
+                    <span className="flex items-center justify-end gap-2">
+                      <b className="font-display">{pct(r.winRate)}</b>
+                      <Meter value={r.winRate} className="hidden h-1.5 w-14 sm:block" />
+                    </span>
+                  </td>
+                  <td className="px-2 py-2 text-right">{r.kda.toFixed(2)}</td>
+                  <td className="hidden px-2 py-2 text-right sm:table-cell">{r.csPerMin.toFixed(1)}</td>
+                  <td className="hidden px-2 py-2 text-right sm:table-cell">{Math.round(r.damagePerMin)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-    </div>
+    </Panel>
   );
 }

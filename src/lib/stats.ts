@@ -8,7 +8,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   UTILITY: "Support",
 };
 
-const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0);
+export const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0);
 
 export function kda(ms: MatchRow[]) {
   const k = mean(ms.map((m) => m.kills));
@@ -115,6 +115,9 @@ export function winFactors(ms: MatchRow[]): WinFactor[] {
     { key: "cs10", label: "CS at 10 min", get: (m) => (m.role === "JUNGLE" || m.role === "UTILITY" ? null : m.csAt10), format: (n) => n.toFixed(0) },
     { key: "share", label: "Damage share", get: (m) => m.damageShare, format: pct },
     { key: "vision", label: "Vision / min", get: (m) => m.visionPerMin, format: (n) => n.toFixed(2) },
+    { key: "wards", label: "Control wards", get: (m) => m.controlWards ?? null, format: (n) => n.toFixed(1) },
+    { key: "dragons", label: "Dragon takedowns", get: (m) => m.dragons ?? null, format: (n) => n.toFixed(1) },
+    { key: "invade", label: "Enemy jungle camps", get: (m) => (m.role === "JUNGLE" ? (m.enemyJungleCamps ?? null) : null), format: (n) => n.toFixed(1) },
   ];
 
   return metrics
