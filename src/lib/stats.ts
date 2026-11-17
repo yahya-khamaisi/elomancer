@@ -112,7 +112,7 @@ export function winFactors(ms: MatchRow[]): WinFactor[] {
     { key: "damage", label: "Damage / min", get: (m) => m.damagePerMin, format: (n) => n.toFixed(0) },
     { key: "kp", label: "Kill participation", get: (m) => m.killParticipation, format: pct },
     { key: "cs", label: "CS / min", get: (m) => m.csPerMin, format: (n) => n.toFixed(1) },
-    { key: "cs10", label: "CS at 10 min", get: (m) => m.csAt10, format: (n) => n.toFixed(0) },
+    { key: "cs10", label: "CS at 10 min", get: (m) => (m.role === "JUNGLE" || m.role === "UTILITY" ? null : m.csAt10), format: (n) => n.toFixed(0) },
     { key: "share", label: "Damage share", get: (m) => m.damageShare, format: pct },
     { key: "vision", label: "Vision / min", get: (m) => m.visionPerMin, format: (n) => n.toFixed(2) },
   ];

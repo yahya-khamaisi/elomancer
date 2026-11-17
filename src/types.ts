@@ -25,7 +25,7 @@ export interface MatchRow {
   killParticipation: number;
   /** 0..1, share of the team's champion damage. */
   damageShare: number;
-  /** Lane minions by 10:00, null when Riot didn't report it. */
+  /** Lane minions by 10:00. Null for jungle/support or when Riot didn't report it. */
   csAt10: number | null;
 }
 

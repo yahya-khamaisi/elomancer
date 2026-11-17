@@ -41,6 +41,7 @@ jobs:
           PLATFORM: ${{ vars.PLATFORM || 'euw1' }}
           REGION: ${{ vars.REGION || 'europe' }}
           SEASON_START: ${{ vars.SEASON_START }}
+          MATCH_COUNT: ${{ vars.MATCH_COUNT || '300' }}
         run: npm run snapshot
 
       - run: npm run build

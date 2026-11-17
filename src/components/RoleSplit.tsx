@@ -23,8 +23,13 @@ export function RoleSplit({ matches }: { matches: MatchRow[] }) {
       </div>
       {best && worst && best !== worst && (
         <p className="insight">
-          Best pick: <b>{championName(best.champion)}</b> at {pct(best.winRate)} over {best.games} games.
-          Weakest: <b>{championName(worst.champion)}</b> at {pct(worst.winRate)} over {worst.games} games.
+          Best pick: <b>{championName(best.champion)}</b> at {pct(best.winRate)} over {best.games} games.{" "}
+          {worst.winRate >= 0.5 ? (
+            <>Every champion you've played 5+ times is at 50% or better; the lowest is{" "}
+              <b>{championName(worst.champion)}</b> at {pct(worst.winRate)}.</>
+          ) : (
+            <>Weakest: <b>{championName(worst.champion)}</b> at {pct(worst.winRate)} over {worst.games} games.</>
+          )}
         </p>
       )}
     </div>

@@ -6,7 +6,7 @@ export function ChampionTable({ matches, version }: { matches: MatchRow[]; versi
   return (
     <div className="card span-7">
       <h2>Champion pool</h2>
-      <p className="sub">Most-played champions this season</p>
+      <p className="sub">Most-played champions in these games</p>
       <div className="scroll-x">
         <table>
           <thead>

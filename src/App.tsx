@@ -13,7 +13,8 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/snapshot.json`)
+    // no-cache: revalidate with GitHub Pages on every visit so a fresh daily snapshot shows at once.
+    fetch(`${import.meta.env.BASE_URL}data/snapshot.json`, { cache: "no-cache" })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then(setData)
       .catch((e: Error) => setError(e.message));

@@ -13,7 +13,7 @@ const KEY = required("RIOT_API_KEY");
 const [GAME_NAME, TAG_LINE] = (process.env.RIOT_ID ?? "khamayseh#456").split("#");
 const PLATFORM = process.env.PLATFORM ?? "euw1";
 const REGION = process.env.REGION ?? "europe";
-const MATCH_COUNT = Math.min(Number(process.env.MATCH_COUNT ?? 100), 300);
+const MATCH_COUNT = Math.min(Number(process.env.MATCH_COUNT ?? 300), 300);
 const SEASON_START = process.env.SEASON_START
   ? Math.floor(new Date(process.env.SEASON_START).getTime() / 1000)
   : undefined;
@@ -132,7 +132,10 @@ for (const [i, id] of ids.entries()) {
     visionPerMin: round(me.visionScore / minutes, 2),
     killParticipation: round(me.challenges?.killParticipation ?? 0, 3),
     damageShare: round(me.challenges?.teamDamagePercentage ?? 0, 3),
-    csAt10: me.challenges?.laneMinionsFirst10Minutes ?? null,
+    // Riot counts lane minions only, which means nothing for junglers and supports.
+    csAt10: me.teamPosition === "JUNGLE" || me.teamPosition === "UTILITY"
+      ? null
+      : (me.challenges?.laneMinionsFirst10Minutes ?? null),
   });
 }
 process.stdout.write("\n");
